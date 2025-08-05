@@ -12,28 +12,28 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-type FeedController struct {
+type TimelineController struct {
 	messageService service.MessageServiceInterface
 	config         *config.AppConfig
 }
 
-func NewFeedController(messageService service.MessageServiceInterface, cfg *config.AppConfig) *FeedController {
-	return &FeedController{
+func NewTimelineController(messageService service.MessageServiceInterface, cfg *config.AppConfig) *TimelineController {
+	return &TimelineController{
 		messageService: messageService,
 		config:         cfg,
 	}
 }
 
-func (c *FeedController) MountIn(r chi.Router) {
-	r.Route("/feed", func(r chi.Router) {
-		r.Get("/", c.GetFeed)
+func (c *TimelineController) MountIn(r chi.Router) {
+	r.Route("/timeline", func(r chi.Router) {
+		r.Get("/", c.GetTimeline)
 	})
 }
 
-func (c *FeedController) GetFeed(w http.ResponseWriter, r *http.Request) {
+func (c *TimelineController) GetTimeline(w http.ResponseWriter, r *http.Request) {
 	userID := r.Header.Get("X-User-ID")
 	if userID == "" {
-		metrics.PutCountMetric(metrics.MetricValidationError, 1)
+		metrics.PutCountMetric(metrics.MetricTimelineError, 1)
 		http.Error(w, "User ID required in X-User-ID header", http.StatusBadRequest)
 		return
 	}

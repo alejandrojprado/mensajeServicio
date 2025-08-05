@@ -17,10 +17,4 @@ const (
 	MetricFollowSuccess  = "Follow_Success"
 	MetricFollowError    = "Follow_Error"
 	MetricFollowDuration = "Follow_Duration"
-
-	MetricFeedSuccess  = "Feed_Success"
-	MetricFeedError    = "Feed_Error"
-	MetricFeedDuration = "Feed_Duration"
-
-	MetricValidationError = "Validation_Error"
 )

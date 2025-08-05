@@ -36,26 +36,26 @@ func (c *MessageController) MountIn(r chi.Router) {
 func (c *MessageController) CreateMessage(w http.ResponseWriter, r *http.Request) {
 	userID := r.Header.Get("X-User-ID")
 	if userID == "" {
-		metrics.PutCountMetric(metrics.MetricValidationError, 1)
+		metrics.PutCountMetric(metrics.MetricMessageError, 1)
 		http.Error(w, "User ID required in X-User-ID header", http.StatusBadRequest)
 		return
 	}
 
 	var message model.Message
 	if err := json.NewDecoder(r.Body).Decode(&message); err != nil {
-		metrics.PutCountMetric(metrics.MetricValidationError, 1)
+		metrics.PutCountMetric(metrics.MetricMessageError, 1)
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
 	if message.Content == "" {
-		metrics.PutCountMetric(metrics.MetricValidationError, 1)
+		metrics.PutCountMetric(metrics.MetricMessageError, 1)
 		http.Error(w, "Content is required", http.StatusBadRequest)
 		return
 	}
 
 	if len(message.Content) > c.config.MaxMessageLength {
-		metrics.PutCountMetric(metrics.MetricValidationError, 1)
+		metrics.PutCountMetric(metrics.MetricMessageError, 1)
 		http.Error(w, "Content too long (max "+strconv.Itoa(c.config.MaxMessageLength)+" characters)", http.StatusBadRequest)
 		return
 	}
@@ -77,12 +77,11 @@ func (c *MessageController) CreateMessage(w http.ResponseWriter, r *http.Request
 func (c *MessageController) GetUserMessages(w http.ResponseWriter, r *http.Request) {
 	userID := r.Header.Get("X-User-ID")
 	if userID == "" {
-		metrics.PutCountMetric(metrics.MetricValidationError, 1)
+		metrics.PutCountMetric(metrics.MetricMessageError, 1)
 		http.Error(w, "User ID required in X-User-ID header", http.StatusBadRequest)
 		return
 	}
 
-	// Obtener parámetros de query
 	limitStr := r.URL.Query().Get("limit")
 	limit := c.config.DefaultLimit
 	if limitStr != "" {

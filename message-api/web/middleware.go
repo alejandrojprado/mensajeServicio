@@ -40,7 +40,7 @@ func Metrics(next http.Handler) http.Handler {
 		switch {
 		case r.Method == "POST" && r.URL.Path == "/messages":
 			metricName = metrics.MetricMessageDuration
-		case r.Method == "GET" && r.URL.Path == "/feed":
+		case r.Method == "GET" && r.URL.Path == "/timeline":
 			metricName = metrics.MetricTimelineDuration
 		case r.Method == "GET" && r.URL.Path == "/messages":
 			metricName = metrics.MetricUserMessagesDuration

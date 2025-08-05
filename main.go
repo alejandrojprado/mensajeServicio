@@ -7,7 +7,7 @@ import (
 	"mensajesService/components/logger"
 	"mensajesService/components/metrics"
 	"mensajesService/message-api/controller"
-	messageService "mensajesService/message-api/service"
+	"mensajesService/message-api/service"
 	"mensajesService/message-api/web"
 	"net/http"
 	"os"
@@ -21,25 +21,26 @@ func main() {
 
 	dbClient, err := database.NewDDBClient(ctx, cfg)
 	if err != nil {
-		logger.LogError("No se pudo inicializar la base de datos", "error", err)
+		logger.LogError("Error initializing database", "error", err)
 		os.Exit(1)
 	}
 
-	messageService := messageService.NewMessageService(dbClient)
+	messageService := service.NewMessageService(dbClient)
+	followService := service.NewFollowService(dbClient)
 
 	messageController := controller.NewMessageController(messageService, cfg)
-	followController := controller.NewFollowController(messageService, cfg)
-	feedController := controller.NewFeedController(messageService, cfg)
+	followController := controller.NewFollowController(followService, cfg)
+	timelineController := controller.NewTimelineController(messageService, cfg)
 
 	router := web.NewHttpHandler("v1")
 
 	messageController.MountIn(router)
 	followController.MountIn(router)
-	feedController.MountIn(router)
+	timelineController.MountIn(router)
 
 	port := cfg.Port
-	logger.LogInfo("Iniciando servicio en el puerto: " + port)
+	logger.LogInfo("Service started on port: " + port)
 	if err := http.ListenAndServe(":"+port, router); err != nil {
-		logger.LogError("Error al iniciar el servicio: ", "error", err)
+		logger.LogError("Error starting service: ", "error", err)
 	}
 }

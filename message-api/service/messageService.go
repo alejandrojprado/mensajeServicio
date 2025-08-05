@@ -2,8 +2,6 @@ package service
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
 	"time"
 
 	"mensajesService/components/database"
@@ -14,9 +12,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/google/uuid"
 )
 
-// MessageServiceInterface define la interfaz para el servicio de mensajes
 type MessageServiceInterface interface {
 	CreateMessage(ctx context.Context, userID, content string) (*model.Message, error)
 	GetUserTimeline(ctx context.Context, userID string, limit int) ([]*model.TimelineItem, error)
@@ -185,7 +183,5 @@ func (s *MessageService) saveTimelineItem(ctx context.Context, item *model.Timel
 }
 
 func generateUUID() string {
-	b := make([]byte, 16)
-	rand.Read(b)
-	return hex.EncodeToString(b)
+	return uuid.New().String()
 }

@@ -165,7 +165,7 @@ func TestCreateMessage_ContentTooLong(t *testing.T) {
 	assert.Contains(t, w.Body.String(), "Content too long")
 }
 
-func TestGetTimeline_Success(t *testing.T) {
+func TestGetUserMessages_Success(t *testing.T) {
 	mockService := &MockMessageService{}
 	mockConfig := &config.AppConfig{
 		DefaultLimit: 20,
@@ -173,26 +173,24 @@ func TestGetTimeline_Success(t *testing.T) {
 
 	controller := NewMessageController(mockService, mockConfig)
 
-	timeline := []*model.TimelineItem{
+	messages := []*model.Message{
 		{
-			MessageID: "msg1",
+			ID:        "msg1",
 			UserID:    "user123",
-			AuthorID:  "author1",
 			Content:   "Test content 1",
 			CreatedAt: time.Now(),
 		},
 		{
-			MessageID: "msg2",
+			ID:        "msg2",
 			UserID:    "user123",
-			AuthorID:  "author2",
 			Content:   "Test content 2",
 			CreatedAt: time.Now(),
 		},
 	}
 
-	mockService.On("GetUserTimeline", mock.Anything, "user123", 20).Return(timeline, nil)
+	mockService.On("GetUserMessages", mock.Anything, "user123", 20).Return(messages, nil)
 
-	req := httptest.NewRequest("GET", "/messages/timeline", nil)
+	req := httptest.NewRequest("GET", "/messages", nil)
 	req.Header.Set("X-User-ID", "user123")
 
 	w := httptest.NewRecorder()
@@ -203,16 +201,16 @@ func TestGetTimeline_Success(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code)
 
-	var response []*model.TimelineItem
+	var response []*model.Message
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
 	assert.Len(t, response, 2)
-	assert.Equal(t, "msg1", response[0].MessageID)
+	assert.Equal(t, "msg1", response[0].ID)
 
 	mockService.AssertExpectations(t)
 }
 
-func TestGetTimeline_MissingUserID(t *testing.T) {
+func TestGetUserMessages_MissingUserID(t *testing.T) {
 	mockService := &MockMessageService{}
 	mockConfig := &config.AppConfig{
 		DefaultLimit: 20,
@@ -220,7 +218,7 @@ func TestGetTimeline_MissingUserID(t *testing.T) {
 
 	controller := NewMessageController(mockService, mockConfig)
 
-	req := httptest.NewRequest("GET", "/messages/timeline", nil)
+	req := httptest.NewRequest("GET", "/messages", nil)
 
 	w := httptest.NewRecorder()
 

@@ -6,7 +6,7 @@ import (
 	"mensajesService/components/database"
 	"mensajesService/components/logger"
 	"mensajesService/components/metrics"
-	messageController "mensajesService/message-api/controller"
+	"mensajesService/message-api/controller"
 	messageService "mensajesService/message-api/service"
 	"mensajesService/message-api/web"
 	"net/http"
@@ -26,10 +26,16 @@ func main() {
 	}
 
 	messageService := messageService.NewMessageService(dbClient)
-	messageController := messageController.NewMessageController(messageService, cfg)
+
+	messageController := controller.NewMessageController(messageService, cfg)
+	followController := controller.NewFollowController(messageService, cfg)
+	feedController := controller.NewFeedController(messageService, cfg)
 
 	router := web.NewHttpHandler("v1")
+
 	messageController.MountIn(router)
+	followController.MountIn(router)
+	feedController.MountIn(router)
 
 	port := cfg.Port
 	logger.LogInfo("Iniciando servicio en el puerto: " + port)

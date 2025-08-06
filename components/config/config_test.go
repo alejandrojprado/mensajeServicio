@@ -39,7 +39,6 @@ func TestLoadConfig(t *testing.T) {
 }
 
 func TestLoadConfig_Defaults(t *testing.T) {
-	// Limpiar todas las variables de entorno
 	os.Unsetenv("AWS_REGION")
 	os.Unsetenv("PORT")
 	os.Unsetenv("DDB_TABLE_MENSAJES")
@@ -51,8 +50,8 @@ func TestLoadConfig_Defaults(t *testing.T) {
 	config := LoadConfig()
 
 	assert.NotNil(t, config)
-	assert.Equal(t, "us-east-1", config.Region)   // Valor por defecto
-	assert.Equal(t, "80", config.Port)            // Valor por defecto
-	assert.Equal(t, 280, config.MaxMessageLength) // Valor por defecto
-	assert.Equal(t, 20, config.DefaultLimit)      // Valor por defecto
+	assert.Equal(t, "us-east-1", config.Region)
+	assert.Equal(t, "80", config.Port)
+	assert.Equal(t, 280, config.MaxMessageLength)
+	assert.Equal(t, 20, config.DefaultLimit)
 }

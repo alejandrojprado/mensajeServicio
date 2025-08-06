@@ -14,5 +14,7 @@ const (
 	MetricUserMessagesError    = "UserMessages_Error"
 	MetricUserMessagesDuration = "UserMessages_Duration"
 
-	MetricValidationError = "Validation_Error"
+	MetricFollowSuccess  = "Follow_Success"
+	MetricFollowError    = "Follow_Error"
+	MetricFollowDuration = "Follow_Duration"
 )

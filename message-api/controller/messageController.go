@@ -30,33 +30,32 @@ func (c *MessageController) MountIn(r chi.Router) {
 	r.Route("/messages", func(r chi.Router) {
 		r.Post("/", c.CreateMessage)
 		r.Get("/", c.GetUserMessages)
-		r.Get("/timeline", c.GetTimeline)
 	})
 }
 
 func (c *MessageController) CreateMessage(w http.ResponseWriter, r *http.Request) {
 	userID := r.Header.Get("X-User-ID")
 	if userID == "" {
-		metrics.PutCountMetric(metrics.MetricValidationError, 1)
+		metrics.PutCountMetric(metrics.MetricMessageError, 1)
 		http.Error(w, "User ID required in X-User-ID header", http.StatusBadRequest)
 		return
 	}
 
 	var message model.Message
 	if err := json.NewDecoder(r.Body).Decode(&message); err != nil {
-		metrics.PutCountMetric(metrics.MetricValidationError, 1)
+		metrics.PutCountMetric(metrics.MetricMessageError, 1)
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
 	if message.Content == "" {
-		metrics.PutCountMetric(metrics.MetricValidationError, 1)
+		metrics.PutCountMetric(metrics.MetricMessageError, 1)
 		http.Error(w, "Content is required", http.StatusBadRequest)
 		return
 	}
 
 	if len(message.Content) > c.config.MaxMessageLength {
-		metrics.PutCountMetric(metrics.MetricValidationError, 1)
+		metrics.PutCountMetric(metrics.MetricMessageError, 1)
 		http.Error(w, "Content too long (max "+strconv.Itoa(c.config.MaxMessageLength)+" characters)", http.StatusBadRequest)
 		return
 	}
@@ -75,36 +74,21 @@ func (c *MessageController) CreateMessage(w http.ResponseWriter, r *http.Request
 	json.NewEncoder(w).Encode(createdMessage)
 }
 
-func (c *MessageController) GetTimeline(w http.ResponseWriter, r *http.Request) {
-	userID := r.Header.Get("X-User-ID")
-	if userID == "" {
-		metrics.PutCountMetric(metrics.MetricValidationError, 1)
-		http.Error(w, "User ID required in X-User-ID header", http.StatusBadRequest)
-		return
-	}
-	limit := c.config.DefaultLimit
-
-	timeline, err := c.messageService.GetUserTimeline(r.Context(), userID, limit)
-	if err != nil {
-		metrics.PutCountMetric(metrics.MetricTimelineError, 1)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		logger.LogError("GetTimeline error", "error", err, "user_id", userID)
-		return
-	}
-
-	metrics.PutCountMetric(metrics.MetricTimelineSuccess, 1)
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(timeline)
-}
-
 func (c *MessageController) GetUserMessages(w http.ResponseWriter, r *http.Request) {
 	userID := r.Header.Get("X-User-ID")
 	if userID == "" {
-		metrics.PutCountMetric(metrics.MetricValidationError, 1)
+		metrics.PutCountMetric(metrics.MetricMessageError, 1)
 		http.Error(w, "User ID required in X-User-ID header", http.StatusBadRequest)
 		return
 	}
+
+	limitStr := r.URL.Query().Get("limit")
 	limit := c.config.DefaultLimit
+	if limitStr != "" {
+		if parsedLimit, err := strconv.Atoi(limitStr); err == nil && parsedLimit > 0 {
+			limit = parsedLimit
+		}
+	}
 
 	messages, err := c.messageService.GetUserMessages(r.Context(), userID, limit)
 	if err != nil {

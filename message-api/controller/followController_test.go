@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"mensajesService/components/config"
+	"mensajesService/components/logger"
 	"mensajesService/message-api/model"
 	"mensajesService/message-api/service"
 
@@ -29,6 +30,8 @@ func (m *MockFollowService) FollowUser(ctx context.Context, userID, followingID 
 }
 
 func TestFollowUser_Success(t *testing.T) {
+	logger.Init()
+
 	mockService := &MockFollowService{}
 	mockConfig := &config.AppConfig{}
 
@@ -45,18 +48,18 @@ func TestFollowUser_Success(t *testing.T) {
 	req.Header.Set("X-User-ID", "user123")
 	req.Header.Set("Content-Type", "application/json")
 
-	w := httptest.NewRecorder()
+	response := httptest.NewRecorder()
 
 	router := chi.NewRouter()
 	controller.MountIn(router)
-	router.ServeHTTP(w, req)
+	router.ServeHTTP(response, req)
 
-	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Equal(t, http.StatusCreated, response.Code)
 
-	var response map[string]string
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	var followResponse map[string]string
+	err := json.Unmarshal(response.Body.Bytes(), &followResponse)
 	assert.NoError(t, err)
-	assert.Equal(t, "User followed successfully", response["message"])
+	assert.Equal(t, "User followed successfully", followResponse["message"])
 
 	mockService.AssertExpectations(t)
 }

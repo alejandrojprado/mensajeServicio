@@ -27,10 +27,11 @@ func main() {
 
 	messageService := service.NewMessageService(dbClient)
 	followService := service.NewFollowService(dbClient)
+	timelineService := service.NewTimelineService(dbClient)
 
 	messageController := controller.NewMessageController(messageService, cfg)
 	followController := controller.NewFollowController(followService, cfg)
-	timelineController := controller.NewTimelineController(messageService, cfg)
+	timelineController := controller.NewTimelineController(timelineService, cfg)
 
 	router := web.NewHttpHandler("v1")
 

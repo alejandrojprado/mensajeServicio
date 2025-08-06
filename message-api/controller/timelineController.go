@@ -13,14 +13,14 @@ import (
 )
 
 type TimelineController struct {
-	messageService service.MessageServiceInterface
-	config         *config.AppConfig
+	timelineService service.TimelineServiceInterface
+	config          *config.AppConfig
 }
 
-func NewTimelineController(messageService service.MessageServiceInterface, cfg *config.AppConfig) *TimelineController {
+func NewTimelineController(timelineService service.TimelineServiceInterface, cfg *config.AppConfig) *TimelineController {
 	return &TimelineController{
-		messageService: messageService,
-		config:         cfg,
+		timelineService: timelineService,
+		config:          cfg,
 	}
 }
 
@@ -39,7 +39,7 @@ func (c *TimelineController) GetTimeline(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	timeline, err := c.messageService.GetUserTimeline(r.Context(), userID, c.config.DefaultLimit)
+	timeline, err := c.timelineService.GetUserTimeline(r.Context(), userID, c.config.DefaultLimit)
 	if err != nil {
 		metrics.PutCountMetric(metrics.MetricTimelineError, 1)
 		logger.LogError("GetTimeline error", "error", err, "user_id", userID)

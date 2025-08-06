@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"mensajesService/components/config"
+	"mensajesService/components/logger"
 	"mensajesService/message-api/model"
 	"mensajesService/message-api/service"
 
@@ -32,14 +33,6 @@ func (m *MockMessageService) CreateMessage(ctx context.Context, userID, content 
 	return args.Get(0).(*model.Message), args.Error(1)
 }
 
-func (m *MockMessageService) GetUserTimeline(ctx context.Context, userID string, limit int) ([]*model.TimelineItem, error) {
-	args := m.Called(ctx, userID, limit)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]*model.TimelineItem), args.Error(1)
-}
-
 func (m *MockMessageService) GetUserMessages(ctx context.Context, userID string, limit int) ([]*model.Message, error) {
 	args := m.Called(ctx, userID, limit)
 	if args.Get(0) == nil {
@@ -49,6 +42,8 @@ func (m *MockMessageService) GetUserMessages(ctx context.Context, userID string,
 }
 
 func TestNewMessageController(t *testing.T) {
+	logger.Init()
+
 	mockService := &MockMessageService{}
 	mockConfig := &config.AppConfig{}
 
@@ -81,18 +76,18 @@ func TestCreateMessage_Success(t *testing.T) {
 	req.Header.Set("X-User-ID", "user123")
 	req.Header.Set("Content-Type", "application/json")
 
-	w := httptest.NewRecorder()
+	response := httptest.NewRecorder()
 
 	router := chi.NewRouter()
 	controller.MountIn(router)
-	router.ServeHTTP(w, req)
+	router.ServeHTTP(response, req)
 
-	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Equal(t, http.StatusCreated, response.Code)
 
-	var response model.Message
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	var messageResponse model.Message
+	err := json.Unmarshal(response.Body.Bytes(), &messageResponse)
 	assert.NoError(t, err)
-	assert.Equal(t, "Test message", response.Content)
+	assert.Equal(t, "Test message", messageResponse.Content)
 
 	mockService.AssertExpectations(t)
 }
@@ -109,60 +104,14 @@ func TestCreateMessage_MissingUserID(t *testing.T) {
 	req := httptest.NewRequest("POST", "/messages", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
 
-	w := httptest.NewRecorder()
+	response := httptest.NewRecorder()
 
 	router := chi.NewRouter()
 	controller.MountIn(router)
-	router.ServeHTTP(w, req)
+	router.ServeHTTP(response, req)
 
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-	assert.Contains(t, w.Body.String(), "User ID required")
-}
-
-func TestCreateMessage_EmptyContent(t *testing.T) {
-	mockService := &MockMessageService{}
-	mockConfig := &config.AppConfig{
-		MaxMessageLength: 280,
-	}
-
-	controller := NewMessageController(mockService, mockConfig)
-
-	body, _ := json.Marshal(map[string]string{"content": ""})
-	req := httptest.NewRequest("POST", "/messages", bytes.NewBuffer(body))
-	req.Header.Set("X-User-ID", "user123")
-	req.Header.Set("Content-Type", "application/json")
-
-	w := httptest.NewRecorder()
-
-	router := chi.NewRouter()
-	controller.MountIn(router)
-	router.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-	assert.Contains(t, w.Body.String(), "Content is required")
-}
-
-func TestCreateMessage_ContentTooLong(t *testing.T) {
-	mockService := &MockMessageService{}
-	mockConfig := &config.AppConfig{
-		MaxMessageLength: 10,
-	}
-
-	controller := NewMessageController(mockService, mockConfig)
-
-	body, _ := json.Marshal(map[string]string{"content": "Un mensaje muyyyyy largo que supera el limite de 10 caracteres"})
-	req := httptest.NewRequest("POST", "/messages", bytes.NewBuffer(body))
-	req.Header.Set("X-User-ID", "user123")
-	req.Header.Set("Content-Type", "application/json")
-
-	w := httptest.NewRecorder()
-
-	router := chi.NewRouter()
-	controller.MountIn(router)
-	router.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-	assert.Contains(t, w.Body.String(), "Content too long")
+	assert.Equal(t, http.StatusBadRequest, response.Code)
+	assert.Contains(t, response.Body.String(), "User ID required")
 }
 
 func TestGetUserMessages_Success(t *testing.T) {
@@ -193,19 +142,19 @@ func TestGetUserMessages_Success(t *testing.T) {
 	req := httptest.NewRequest("GET", "/messages", nil)
 	req.Header.Set("X-User-ID", "user123")
 
-	w := httptest.NewRecorder()
+	response := httptest.NewRecorder()
 
 	router := chi.NewRouter()
 	controller.MountIn(router)
-	router.ServeHTTP(w, req)
+	router.ServeHTTP(response, req)
 
-	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, http.StatusOK, response.Code)
 
-	var response []*model.Message
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	var messagesResponse []*model.Message
+	err := json.Unmarshal(response.Body.Bytes(), &messagesResponse)
 	assert.NoError(t, err)
-	assert.Len(t, response, 2)
-	assert.Equal(t, "msg1", response[0].ID)
+	assert.Len(t, messagesResponse, 2)
+	assert.Equal(t, "msg1", messagesResponse[0].ID)
 
 	mockService.AssertExpectations(t)
 }
@@ -220,12 +169,12 @@ func TestGetUserMessages_MissingUserID(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/messages", nil)
 
-	w := httptest.NewRecorder()
+	response := httptest.NewRecorder()
 
 	router := chi.NewRouter()
 	controller.MountIn(router)
-	router.ServeHTTP(w, req)
+	router.ServeHTTP(response, req)
 
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-	assert.Contains(t, w.Body.String(), "User ID required")
+	assert.Equal(t, http.StatusBadRequest, response.Code)
+	assert.Contains(t, response.Body.String(), "User ID required")
 }

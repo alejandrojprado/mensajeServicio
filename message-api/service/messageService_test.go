@@ -86,10 +86,9 @@ func TestCreateMessage_Success(t *testing.T) {
 	assert.NotEmpty(t, message.ID)
 	assert.True(t, time.Since(message.CreatedAt) < time.Second)
 
-	// tiempo de espera pq la llamada es asincronica
+	// wait time (It could be better to avoid the fixed wait time)
 	time.Sleep(100 * time.Millisecond)
 
-	// Verificar las llamadas
 	mockDB.AssertNumberOfCalls(t, "GetMessagesTableName", 1)
 	mockDB.AssertNumberOfCalls(t, "PutItem", 1)
 }
@@ -109,39 +108,6 @@ func TestCreateMessage_DatabaseError(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Nil(t, message)
-
-	mockDB.AssertExpectations(t)
-}
-
-func TestGetUserTimeline_Success(t *testing.T) {
-	mockDB := &MockDDBClient{}
-	service := NewMessageService(mockDB)
-
-	ctx := context.Background()
-	userID := "user123"
-	limit := 10
-
-	timelineItems := []map[string]types.AttributeValue{
-		{
-			"message_id": &types.AttributeValueMemberS{Value: "msg1"},
-			"user_id":    &types.AttributeValueMemberS{Value: userID},
-			"author_id":  &types.AttributeValueMemberS{Value: "author1"},
-			"content":    &types.AttributeValueMemberS{Value: "Test content 1"},
-			"created_at": &types.AttributeValueMemberS{Value: time.Now().Format(time.RFC3339)},
-		},
-	}
-
-	mockDB.On("GetTimelineTableName").Return("timeline-table")
-	mockDB.On("Query", ctx, mock.AnythingOfType("*dynamodb.QueryInput")).Return(&dynamodb.QueryOutput{
-		Items: timelineItems,
-	}, nil)
-
-	result, err := service.GetUserTimeline(ctx, userID, limit)
-
-	assert.NoError(t, err)
-	assert.Len(t, result, 1)
-	assert.Equal(t, "msg1", result[0].MessageID)
-	assert.Equal(t, "Test content 1", result[0].Content)
 
 	mockDB.AssertExpectations(t)
 }

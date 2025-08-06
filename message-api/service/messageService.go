@@ -17,7 +17,6 @@ import (
 
 type MessageServiceInterface interface {
 	CreateMessage(ctx context.Context, userID, content string) (*model.Message, error)
-	GetUserTimeline(ctx context.Context, userID string, limit int) ([]*model.TimelineItem, error)
 	GetUserMessages(ctx context.Context, userID string, limit int) ([]*model.Message, error)
 }
 
@@ -52,31 +51,6 @@ func (s *MessageService) CreateMessage(ctx context.Context, userID, content stri
 	}()
 
 	return message, nil
-}
-
-func (s *MessageService) GetUserTimeline(ctx context.Context, userID string, limit int) ([]*model.TimelineItem, error) {
-	input := &dynamodb.QueryInput{
-		TableName:              aws.String(s.dbClient.GetTimelineTableName()),
-		KeyConditionExpression: aws.String("PK = :pk"),
-		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":pk": &types.AttributeValueMemberS{Value: "USER#" + userID},
-		},
-		ScanIndexForward: aws.Bool(false),
-		Limit:            aws.Int32(int32(limit)),
-	}
-
-	result, err := s.dbClient.Query(ctx, input)
-	if err != nil {
-		return nil, err
-	}
-
-	var timelineItems []*model.TimelineItem
-	err = attributevalue.UnmarshalListOfMaps(result.Items, &timelineItems)
-	if err != nil {
-		return nil, err
-	}
-
-	return timelineItems, nil
 }
 
 func (s *MessageService) GetUserMessages(ctx context.Context, userID string, limit int) ([]*model.Message, error) {

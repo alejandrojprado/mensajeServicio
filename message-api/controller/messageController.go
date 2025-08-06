@@ -3,7 +3,6 @@ package controller
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 
 	"mensajesService/components/config"
 	"mensajesService/components/logger"
@@ -56,7 +55,7 @@ func (c *MessageController) CreateMessage(w http.ResponseWriter, r *http.Request
 
 	if len(message.Content) > c.config.MaxMessageLength {
 		metrics.PutCountMetric(metrics.MetricMessageError, 1)
-		http.Error(w, "Content too long (max "+strconv.Itoa(c.config.MaxMessageLength)+" characters)", http.StatusBadRequest)
+		http.Error(w, "Content too long", http.StatusBadRequest)
 		return
 	}
 
@@ -82,23 +81,17 @@ func (c *MessageController) GetUserMessages(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	limitStr := r.URL.Query().Get("limit")
-	limit := c.config.DefaultLimit
-	if limitStr != "" {
-		if parsedLimit, err := strconv.Atoi(limitStr); err == nil && parsedLimit > 0 {
-			limit = parsedLimit
-		}
-	}
-
-	messages, err := c.messageService.GetUserMessages(r.Context(), userID, limit)
+	messages, err := c.messageService.GetUserMessages(r.Context(), userID, c.config.DefaultLimit)
 	if err != nil {
 		metrics.PutCountMetric(metrics.MetricUserMessagesError, 1)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		logger.LogError("GetUserMessages error", "error", err, "user_id", userID)
 		return
 	}
-
+	messagesAmount := float64(len(messages))
 	metrics.PutCountMetric(metrics.MetricUserMessagesSuccess, 1)
+	metrics.PutCountMetric(metrics.MetricUserMessagesCount, messagesAmount)
+	logger.LogInfo("GetUserMessages success", "user_id", userID, "messages_amount", messagesAmount)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(messages)
 }

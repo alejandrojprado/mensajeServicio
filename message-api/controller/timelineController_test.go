@@ -29,6 +29,11 @@ func (m *MockTimelineService) GetUserTimeline(ctx context.Context, userID string
 	return args.Get(0).([]*model.TimelineItem), args.Error(1)
 }
 
+func (m *MockTimelineService) UpdateFollowersTimeline(ctx context.Context, message *model.Message) error {
+	args := m.Called(ctx, message)
+	return args.Error(0)
+}
+
 func TestGetTimeline_Success(t *testing.T) {
 	logger.Init()
 

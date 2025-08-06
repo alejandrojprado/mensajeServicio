@@ -24,8 +24,8 @@ func LoadConfig() *AppConfig {
 	cfg := &AppConfig{
 		Env:                 getEnv("ENV", "dev"),
 		Port:                getEnv("PORT", "80"),
-		TableMensajesName:   getEnv("DDB_TABLE_MENSAJES", "mensajes"),
-		TableSeguidoresName: getEnv("DDB_TABLE_SEGUIDORES", "seguidores"),
+		TableMensajesName:   getEnv("DDB_TABLE_MENSAJES", "messages"),
+		TableSeguidoresName: getEnv("DDB_TABLE_SEGUIDORES", "follows"),
 		TableTimelineName:   getEnv("DDB_TABLE_TIMELINE", "timeline"),
 		Region:              getEnv("AWS_REGION", "us-east-1"),
 		BaseURL:             getEnv("BASE_URL", "http://localhost:8080/"),

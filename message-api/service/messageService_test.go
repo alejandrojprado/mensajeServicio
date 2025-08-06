@@ -122,7 +122,7 @@ func TestGetUserMessages_Success(t *testing.T) {
 
 	messages := []map[string]types.AttributeValue{
 		{
-			"id":         &types.AttributeValueMemberS{Value: "msg1"},
+			"message_id": &types.AttributeValueMemberS{Value: "msg1"},
 			"user_id":    &types.AttributeValueMemberS{Value: userID},
 			"content":    &types.AttributeValueMemberS{Value: "Test content 1"},
 			"created_at": &types.AttributeValueMemberS{Value: time.Now().Format(time.RFC3339)},

@@ -45,22 +45,25 @@ func TestNewMessageController(t *testing.T) {
 	logger.Init()
 
 	mockService := &MockMessageService{}
+	mockTimelineService := &MockTimelineService{}
 	mockConfig := &config.AppConfig{}
 
-	controller := NewMessageController(mockService, mockConfig)
+	controller := NewMessageController(mockService, mockTimelineService, mockConfig)
 
 	assert.NotNil(t, controller)
 	assert.Equal(t, mockService, controller.messageService)
+	assert.Equal(t, mockTimelineService, controller.timelineService)
 	assert.Equal(t, mockConfig, controller.config)
 }
 
 func TestCreateMessage_Success(t *testing.T) {
 	mockService := &MockMessageService{}
+	mockTimelineService := &MockTimelineService{}
 	mockConfig := &config.AppConfig{
 		MaxMessageLength: 280,
 	}
 
-	controller := NewMessageController(mockService, mockConfig)
+	controller := NewMessageController(mockService, mockTimelineService, mockConfig)
 
 	message := &model.Message{
 		ID:        "test-id",
@@ -70,6 +73,7 @@ func TestCreateMessage_Success(t *testing.T) {
 	}
 
 	mockService.On("CreateMessage", mock.Anything, "user123", "Test message").Return(message, nil)
+	mockTimelineService.On("UpdateFollowersTimeline", mock.Anything, message).Return(nil)
 
 	body, _ := json.Marshal(map[string]string{"content": "Test message"})
 	req := httptest.NewRequest("POST", "/messages", bytes.NewBuffer(body))
@@ -89,16 +93,21 @@ func TestCreateMessage_Success(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "Test message", messageResponse.Content)
 
+	// Wait a bit for the goroutine to complete
+	time.Sleep(100 * time.Millisecond)
+
 	mockService.AssertExpectations(t)
+	mockTimelineService.AssertExpectations(t)
 }
 
 func TestCreateMessage_MissingUserID(t *testing.T) {
 	mockService := &MockMessageService{}
+	mockTimelineService := &MockTimelineService{}
 	mockConfig := &config.AppConfig{
 		MaxMessageLength: 280,
 	}
 
-	controller := NewMessageController(mockService, mockConfig)
+	controller := NewMessageController(mockService, mockTimelineService, mockConfig)
 
 	body, _ := json.Marshal(map[string]string{"content": "Test message"})
 	req := httptest.NewRequest("POST", "/messages", bytes.NewBuffer(body))
@@ -116,11 +125,12 @@ func TestCreateMessage_MissingUserID(t *testing.T) {
 
 func TestGetUserMessages_Success(t *testing.T) {
 	mockService := &MockMessageService{}
+	mockTimelineService := &MockTimelineService{}
 	mockConfig := &config.AppConfig{
 		DefaultLimit: 20,
 	}
 
-	controller := NewMessageController(mockService, mockConfig)
+	controller := NewMessageController(mockService, mockTimelineService, mockConfig)
 
 	messages := []*model.Message{
 		{
@@ -161,11 +171,12 @@ func TestGetUserMessages_Success(t *testing.T) {
 
 func TestGetUserMessages_MissingUserID(t *testing.T) {
 	mockService := &MockMessageService{}
+	mockTimelineService := &MockTimelineService{}
 	mockConfig := &config.AppConfig{
 		DefaultLimit: 20,
 	}
 
-	controller := NewMessageController(mockService, mockConfig)
+	controller := NewMessageController(mockService, mockTimelineService, mockConfig)
 
 	req := httptest.NewRequest("GET", "/messages", nil)
 

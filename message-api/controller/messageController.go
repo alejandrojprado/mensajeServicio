@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
@@ -14,14 +15,16 @@ import (
 )
 
 type MessageController struct {
-	messageService service.MessageServiceInterface
-	config         *config.AppConfig
+	messageService  service.MessageServiceInterface
+	timelineService service.TimelineServiceInterface
+	config          *config.AppConfig
 }
 
-func NewMessageController(messageService service.MessageServiceInterface, cfg *config.AppConfig) *MessageController {
+func NewMessageController(messageService service.MessageServiceInterface, timelineService service.TimelineServiceInterface, cfg *config.AppConfig) *MessageController {
 	return &MessageController{
-		messageService: messageService,
-		config:         cfg,
+		messageService:  messageService,
+		timelineService: timelineService,
+		config:          cfg,
 	}
 }
 
@@ -66,6 +69,12 @@ func (c *MessageController) CreateMessage(w http.ResponseWriter, r *http.Request
 		logger.LogError("CreateMessage error", "error", err, "user_id", userID)
 		return
 	}
+
+	go func() {
+		if err := c.timelineService.UpdateFollowersTimeline(context.Background(), createdMessage); err != nil {
+			logger.LogError("Error updating followers timeline", "error", err, "message_id", createdMessage.ID)
+		}
+	}()
 
 	metrics.PutCountMetric(metrics.MetricMessageSuccess, 1)
 	w.Header().Set("Content-Type", "application/json")

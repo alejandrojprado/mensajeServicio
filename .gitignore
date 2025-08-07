@@ -17,8 +17,6 @@ main
 coverage*
 
 *.env
-Dockerfile
-
 /build/
 /dist/
 

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"mensajesService/components/database"
+	"mensajesService/components/logger"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
@@ -34,11 +35,6 @@ func (m *MockDDBClient) Query(ctx context.Context, input *dynamodb.QueryInput) (
 	return args.Get(0).(*dynamodb.QueryOutput), args.Error(1)
 }
 
-func (m *MockDDBClient) DeleteItem(ctx context.Context, tableName string, key map[string]types.AttributeValue) error {
-	args := m.Called(ctx, tableName, key)
-	return args.Error(0)
-}
-
 func (m *MockDDBClient) GetMessagesTableName() string {
 	args := m.Called()
 	return args.String(0)
@@ -63,6 +59,7 @@ func TestNewMessageService(t *testing.T) {
 }
 
 func TestCreateMessage_Success(t *testing.T) {
+	logger.Init()
 	mockDB := &MockDDBClient{}
 	service := NewMessageService(mockDB)
 
@@ -122,7 +119,7 @@ func TestGetUserMessages_Success(t *testing.T) {
 
 	messages := []map[string]types.AttributeValue{
 		{
-			"id":         &types.AttributeValueMemberS{Value: "msg1"},
+			"message_id": &types.AttributeValueMemberS{Value: "msg1"},
 			"user_id":    &types.AttributeValueMemberS{Value: userID},
 			"content":    &types.AttributeValueMemberS{Value: "Test content 1"},
 			"created_at": &types.AttributeValueMemberS{Value: time.Now().Format(time.RFC3339)},

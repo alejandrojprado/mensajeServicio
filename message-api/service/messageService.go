@@ -44,19 +44,13 @@ func (s *MessageService) CreateMessage(ctx context.Context, userID, content stri
 		return nil, err
 	}
 
-	go func() {
-		if err := s.updateFollowersTimeline(context.Background(), message); err != nil {
-			logger.LogError("Error updating followers timeline", "error", err, "message_id", messageID)
-		}
-	}()
-
+	logger.LogInfo("Message created successfully", "message_id", message.ID, "user_id", userID)
 	return message, nil
 }
 
 func (s *MessageService) GetUserMessages(ctx context.Context, userID string, limit int) ([]*model.Message, error) {
 	input := &dynamodb.QueryInput{
 		TableName:              aws.String(s.dbClient.GetMessagesTableName()),
-		IndexName:              aws.String("UserIDIndex"),
 		KeyConditionExpression: aws.String("user_id = :user_id"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":user_id": &types.AttributeValueMemberS{Value: userID},
@@ -85,75 +79,7 @@ func (s *MessageService) saveMessage(ctx context.Context, message *model.Message
 		return err
 	}
 
-	item["PK"] = &types.AttributeValueMemberS{Value: "MESSAGE#" + message.ID}
-	item["SK"] = &types.AttributeValueMemberS{Value: "MESSAGE#" + message.ID}
-
 	return s.dbClient.PutItem(ctx, s.dbClient.GetMessagesTableName(), item)
-}
-
-func (s *MessageService) updateFollowersTimeline(ctx context.Context, message *model.Message) error {
-	followers, err := s.getFollowers(ctx, message.UserID)
-	if err != nil {
-		return err
-	}
-
-	for _, followerID := range followers {
-		timelineItem := &model.TimelineItem{
-			MessageID: message.ID,
-			UserID:    followerID,
-			AuthorID:  message.UserID,
-			Content:   message.Content,
-			CreatedAt: message.CreatedAt,
-		}
-
-		err := s.saveTimelineItem(ctx, timelineItem)
-		if err != nil {
-			logger.LogError("Error saving timeline item", "error", err, "follower_id", followerID)
-			continue
-		}
-	}
-
-	return nil
-}
-
-func (s *MessageService) getFollowers(ctx context.Context, userID string) ([]string, error) {
-	input := &dynamodb.QueryInput{
-		TableName:              aws.String(s.dbClient.GetFollowersTableName()),
-		IndexName:              aws.String("FollowingIndex"),
-		KeyConditionExpression: aws.String("SK = :sk"),
-		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":sk": &types.AttributeValueMemberS{Value: "FOLLOWING#" + userID},
-		},
-	}
-
-	result, err := s.dbClient.Query(ctx, input)
-	if err != nil {
-		return nil, err
-	}
-
-	var follows []*model.Follow
-	err = attributevalue.UnmarshalListOfMaps(result.Items, &follows)
-	if err != nil {
-		return nil, err
-	}
-
-	var followers []string
-	for _, follow := range follows {
-		followers = append(followers, follow.FollowerID)
-	}
-
-	return followers, nil
-}
-
-func (s *MessageService) saveTimelineItem(ctx context.Context, item *model.TimelineItem) error {
-	timelineItem, err := attributevalue.MarshalMap(item)
-	if err != nil {
-		return err
-	}
-	timelineItem["PK"] = &types.AttributeValueMemberS{Value: "USER#" + item.UserID}
-	timelineItem["SK"] = &types.AttributeValueMemberS{Value: "MESSAGE#" + item.MessageID}
-
-	return s.dbClient.PutItem(ctx, s.dbClient.GetTimelineTableName(), timelineItem)
 }
 
 func generateUUID() string {

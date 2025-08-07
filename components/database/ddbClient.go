@@ -15,7 +15,6 @@ type DDBClientInterface interface {
 	PutItem(ctx context.Context, tableName string, item map[string]types.AttributeValue) error
 	GetItem(ctx context.Context, tableName string, key map[string]types.AttributeValue) (*dynamodb.GetItemOutput, error)
 	Query(ctx context.Context, input *dynamodb.QueryInput) (*dynamodb.QueryOutput, error)
-	DeleteItem(ctx context.Context, tableName string, key map[string]types.AttributeValue) error
 	GetMessagesTableName() string
 	GetFollowersTableName() string
 	GetTimelineTableName() string
@@ -59,14 +58,6 @@ func (d *DDBClient) GetItem(ctx context.Context, tableName string, key map[strin
 
 func (d *DDBClient) Query(ctx context.Context, input *dynamodb.QueryInput) (*dynamodb.QueryOutput, error) {
 	return d.client.Query(ctx, input)
-}
-
-func (d *DDBClient) DeleteItem(ctx context.Context, tableName string, key map[string]types.AttributeValue) error {
-	_, err := d.client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
-		TableName: aws.String(tableName),
-		Key:       key,
-	})
-	return err
 }
 
 func (d *DDBClient) GetMessagesTableName() string {

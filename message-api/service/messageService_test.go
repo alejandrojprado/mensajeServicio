@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"mensajesService/components/database"
+	"mensajesService/components/logger"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
@@ -58,6 +59,7 @@ func TestNewMessageService(t *testing.T) {
 }
 
 func TestCreateMessage_Success(t *testing.T) {
+	logger.Init()
 	mockDB := &MockDDBClient{}
 	service := NewMessageService(mockDB)
 

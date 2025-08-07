@@ -16,7 +16,7 @@ import (
 
 type TimelineServiceInterface interface {
 	GetUserTimeline(ctx context.Context, userID string, limit int) ([]*model.TimelineItem, error)
-	AddMessageToFollowersTimeline(ctx context.Context, message *model.Message, followerIDs []string) error
+	UpdateFollowersTimeline(ctx context.Context, message *model.Message) error
 }
 
 type TimelineService struct {
@@ -54,8 +54,14 @@ func (s *TimelineService) GetUserTimeline(ctx context.Context, userID string, li
 	return timelineItems, nil
 }
 
-func (s *TimelineService) AddMessageToFollowersTimeline(ctx context.Context, message *model.Message, followerIDs []string) error {
-	for _, followerID := range followerIDs {
+func (s *TimelineService) UpdateFollowersTimeline(ctx context.Context, message *model.Message) error {
+	followers, err := s.getFollowers(ctx, message.UserID)
+	if err != nil {
+		logger.LogError("Error getting followers", "error", err, "user_id", message.UserID)
+		return err
+	}
+
+	for _, followerID := range followers {
 		timelineItem := &model.TimelineItem{
 			MessageID: message.ID,
 			UserID:    followerID,
@@ -89,4 +95,33 @@ func (s *TimelineService) saveTimelineItem(ctx context.Context, item *model.Time
 	}
 
 	return nil
+}
+
+func (s *TimelineService) getFollowers(ctx context.Context, userID string) ([]string, error) {
+	input := &dynamodb.QueryInput{
+		TableName:              aws.String(s.dbClient.GetFollowersTableName()),
+		IndexName:              aws.String("FollowingIndex"),
+		KeyConditionExpression: aws.String("following_id = :following_id"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":following_id": &types.AttributeValueMemberS{Value: userID},
+		},
+	}
+
+	result, err := s.dbClient.Query(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+
+	var follows []*model.Follow
+	err = attributevalue.UnmarshalListOfMaps(result.Items, &follows)
+	if err != nil {
+		return nil, err
+	}
+
+	var followers []string
+	for _, follow := range follows {
+		followers = append(followers, follow.FollowerID)
+	}
+
+	return followers, nil
 }

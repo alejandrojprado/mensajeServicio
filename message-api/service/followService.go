@@ -71,14 +71,8 @@ func (s *FollowService) updateFollowerTimeline(ctx context.Context, followerID, 
 		return err
 	}
 
-	followers, err := s.getFollowers(ctx, followingID)
-	if err != nil {
-		logger.LogError("Error getting followers", "error", err, "user_id", followingID)
-		return err
-	}
-
 	for _, message := range messages {
-		if err := s.timelineService.AddMessageToFollowersTimeline(ctx, message, followers); err != nil {
+		if err := s.timelineService.UpdateFollowersTimeline(ctx, message); err != nil {
 			continue
 		}
 	}

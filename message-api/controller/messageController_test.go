@@ -73,7 +73,7 @@ func TestCreateMessage_Success(t *testing.T) {
 	}
 
 	mockService.On("CreateMessage", mock.Anything, "user123", "Test message").Return(message, nil)
-	mockTimelineService.On("AddMessageToFollowersTimeline", mock.Anything, message, mock.Anything).Return(nil)
+	mockTimelineService.On("UpdateFollowersTimeline", mock.Anything, message).Return(nil)
 
 	body, _ := json.Marshal(map[string]string{"content": "Test message"})
 	req := httptest.NewRequest("POST", "/messages", bytes.NewBuffer(body))

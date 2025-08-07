@@ -34,11 +34,6 @@ func (m *MockDDBClient) Query(ctx context.Context, input *dynamodb.QueryInput) (
 	return args.Get(0).(*dynamodb.QueryOutput), args.Error(1)
 }
 
-func (m *MockDDBClient) DeleteItem(ctx context.Context, tableName string, key map[string]types.AttributeValue) error {
-	args := m.Called(ctx, tableName, key)
-	return args.Error(0)
-}
-
 func (m *MockDDBClient) GetMessagesTableName() string {
 	args := m.Called()
 	return args.String(0)

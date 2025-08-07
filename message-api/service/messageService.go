@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"mensajesService/components/database"
+	"mensajesService/components/logger"
 	"mensajesService/message-api/model"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -43,13 +44,13 @@ func (s *MessageService) CreateMessage(ctx context.Context, userID, content stri
 		return nil, err
 	}
 
+	logger.LogInfo("Message created successfully", "message_id", message.ID, "user_id", userID)
 	return message, nil
 }
 
 func (s *MessageService) GetUserMessages(ctx context.Context, userID string, limit int) ([]*model.Message, error) {
 	input := &dynamodb.QueryInput{
 		TableName:              aws.String(s.dbClient.GetMessagesTableName()),
-		IndexName:              aws.String("UserIDIndex"),
 		KeyConditionExpression: aws.String("user_id = :user_id"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":user_id": &types.AttributeValueMemberS{Value: userID},
@@ -77,9 +78,6 @@ func (s *MessageService) saveMessage(ctx context.Context, message *model.Message
 	if err != nil {
 		return err
 	}
-
-	item["PK"] = &types.AttributeValueMemberS{Value: "MESSAGE#" + message.ID}
-	item["SK"] = &types.AttributeValueMemberS{Value: "MESSAGE#" + message.ID}
 
 	return s.dbClient.PutItem(ctx, s.dbClient.GetMessagesTableName(), item)
 }

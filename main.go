@@ -26,8 +26,8 @@ func main() {
 	}
 
 	messageService := service.NewMessageService(dbClient)
-	followService := service.NewFollowService(dbClient)
 	timelineService := service.NewTimelineService(dbClient)
+	followService := service.NewFollowService(dbClient, messageService, timelineService)
 
 	messageController := controller.NewMessageController(messageService, timelineService, cfg)
 	followController := controller.NewFollowController(followService, cfg)

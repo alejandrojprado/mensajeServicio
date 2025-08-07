@@ -46,6 +46,14 @@ func (c *TimelineController) GetTimeline(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
+
+	if len(timeline) == 0 {
+		metrics.PutCountMetric(metrics.MetricTimelineError, 1)
+		logger.LogError("Get Timeline error", "error", "User not found", "user_id", userID)
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+
 	timelineMessagesAmount := float64(len(timeline))
 	metrics.PutCountMetric(metrics.MetricTimelineSuccess, 1)
 	metrics.PutCountMetric(metrics.MetricTimelineCount, timelineMessagesAmount)

@@ -73,7 +73,7 @@ func TestCreateMessage_Success(t *testing.T) {
 	}
 
 	mockService.On("CreateMessage", mock.Anything, "user123", "Test message").Return(message, nil)
-	mockTimelineService.On("UpdateFollowersTimeline", mock.Anything, message).Return(nil)
+	mockTimelineService.On("AddMessageToFollowersTimeline", mock.Anything, message, mock.Anything).Return(nil)
 
 	body, _ := json.Marshal(map[string]string{"content": "Test message"})
 	req := httptest.NewRequest("POST", "/messages", bytes.NewBuffer(body))
@@ -93,7 +93,7 @@ func TestCreateMessage_Success(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "Test message", messageResponse.Content)
 
-	// Wait a bit for the goroutine to complete
+	// Wait a bit for the goroutine to complete. It could be better
 	time.Sleep(100 * time.Millisecond)
 
 	mockService.AssertExpectations(t)

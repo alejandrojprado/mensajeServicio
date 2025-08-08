@@ -26,7 +26,7 @@ func NewFollowController(followService service.FollowServiceInterface, cfg *conf
 }
 
 func (c *FollowController) MountIn(r chi.Router) {
-	r.Route("/follows", func(r chi.Router) {
+	r.Route("/follow", func(r chi.Router) {
 		r.Post("/", c.FollowUser)
 	})
 }

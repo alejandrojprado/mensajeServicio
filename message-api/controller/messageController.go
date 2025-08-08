@@ -29,7 +29,7 @@ func NewMessageController(messageService service.MessageServiceInterface, timeli
 }
 
 func (c *MessageController) MountIn(r chi.Router) {
-	r.Route("/messages", func(r chi.Router) {
+	r.Route("/message", func(r chi.Router) {
 		r.Post("/", c.CreateMessage)
 		r.Get("/", c.GetUserMessages)
 	})

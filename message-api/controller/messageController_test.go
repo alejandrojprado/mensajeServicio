@@ -76,7 +76,7 @@ func TestCreateMessage_Success(t *testing.T) {
 	mockTimelineService.On("UpdateFollowersTimeline", mock.Anything, message).Return(nil)
 
 	body, _ := json.Marshal(map[string]string{"content": "Test message"})
-	req := httptest.NewRequest("POST", "/messages", bytes.NewBuffer(body))
+	req := httptest.NewRequest("POST", "/message", bytes.NewBuffer(body))
 	req.Header.Set("X-User-ID", "user123")
 	req.Header.Set("Content-Type", "application/json")
 
@@ -110,7 +110,7 @@ func TestCreateMessage_MissingUserID(t *testing.T) {
 	controller := NewMessageController(mockService, mockTimelineService, mockConfig)
 
 	body, _ := json.Marshal(map[string]string{"content": "Test message"})
-	req := httptest.NewRequest("POST", "/messages", bytes.NewBuffer(body))
+	req := httptest.NewRequest("POST", "/message", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
 
 	response := httptest.NewRecorder()
@@ -149,7 +149,7 @@ func TestGetUserMessages_Success(t *testing.T) {
 
 	mockService.On("GetUserMessages", mock.Anything, "user123", 20).Return(messages, nil)
 
-	req := httptest.NewRequest("GET", "/messages", nil)
+	req := httptest.NewRequest("GET", "/message", nil)
 	req.Header.Set("X-User-ID", "user123")
 
 	response := httptest.NewRecorder()
@@ -178,7 +178,7 @@ func TestGetUserMessages_MissingUserID(t *testing.T) {
 
 	controller := NewMessageController(mockService, mockTimelineService, mockConfig)
 
-	req := httptest.NewRequest("GET", "/messages", nil)
+	req := httptest.NewRequest("GET", "/message", nil)
 
 	response := httptest.NewRecorder()
 

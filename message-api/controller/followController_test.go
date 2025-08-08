@@ -44,7 +44,7 @@ func TestFollowUser_Success(t *testing.T) {
 	}
 
 	body, _ := json.Marshal(followRequest)
-	req := httptest.NewRequest("POST", "/follows", bytes.NewBuffer(body))
+	req := httptest.NewRequest("POST", "/follow", bytes.NewBuffer(body))
 	req.Header.Set("X-User-ID", "user123")
 	req.Header.Set("Content-Type", "application/json")
 

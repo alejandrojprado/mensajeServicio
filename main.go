@@ -14,6 +14,7 @@ import (
 )
 
 func main() {
+	// cambio para disparar contenedor
 	logger.Init()
 	ctx := context.Background()
 	cfg := config.LoadConfig()
